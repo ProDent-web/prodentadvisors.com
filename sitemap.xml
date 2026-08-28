@@ -16,9 +16,29 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://prodentadvisors.com/services-turnkey.html</loc>
+    <lastmod>2026-08-28</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://prodentadvisors.com/services-diy.html</loc>
+    <lastmod>2026-08-28</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://prodentadvisors.com/services-consulting.html</loc>
     <lastmod>2026-08-28</lastmod>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://prodentadvisors.com/services-hourly.html</loc>
+    <lastmod>2026-08-28</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://prodentadvisors.com/services-retainer.html</loc>
+    <lastmod>2026-08-28</lastmod>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://prodentadvisors.com/services-marketing.html</loc>
@@ -26,9 +46,54 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://prodentadvisors.com/services-seo.html</loc>
+    <lastmod>2026-08-28</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://prodentadvisors.com/services-website.html</loc>
+    <lastmod>2026-08-28</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://prodentadvisors.com/services-google-ads.html</loc>
+    <lastmod>2026-08-28</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://prodentadvisors.com/services-meta-ads.html</loc>
+    <lastmod>2026-08-28</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://prodentadvisors.com/services-branding.html</loc>
+    <lastmod>2026-08-28</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://prodentadvisors.com/services-billing.html</loc>
     <lastmod>2026-08-28</lastmod>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://prodentadvisors.com/services-insurance-billing.html</loc>
+    <lastmod>2026-08-28</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://prodentadvisors.com/services-patient-billing.html</loc>
+    <lastmod>2026-08-28</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://prodentadvisors.com/services-verification.html</loc>
+    <lastmod>2026-08-28</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://prodentadvisors.com/services-credentialing.html</loc>
+    <lastmod>2026-08-28</lastmod>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://prodentadvisors.com/about.html</loc>
