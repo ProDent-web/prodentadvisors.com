@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Local tooling — not part of the site
+.claude/
+
+# Build artifact: the manual-upload zip. Deploying via Git makes it redundant,
+# and anything committed here is served publicly from the web root.
+prodent-site.zip

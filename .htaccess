@@ -1,0 +1,101 @@
+# =============================================================================
+#  ProDent Advisors — Apache / LiteSpeed config for Hostinger shared hosting
+#  Upload this file to  public_html/  alongside index.html
+# =============================================================================
+
+# --- Default document ---------------------------------------------------------
+DirectoryIndex index.html
+
+# --- Force HTTPS + strip www --------------------------------------------------
+# Canonical host is  https://prodentadvisors.com  (no www).
+# Turn these off ONLY while your SSL certificate is still being issued.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # http -> https
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+  # www -> non-www
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
+
+  # /index.html -> /   (avoids duplicate-content against the canonical tag)
+  RewriteCond %{THE_REQUEST} \s/+index\.html[\s?] [NC]
+  RewriteRule ^ / [R=301,L]
+</IfModule>
+
+# --- Custom error page --------------------------------------------------------
+ErrorDocument 404 /404.html
+
+# --- Compression --------------------------------------------------------------
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml
+  AddOutputFilterByType DEFLATE application/javascript application/x-javascript
+  AddOutputFilterByType DEFLATE application/json application/xml
+  AddOutputFilterByType DEFLATE image/svg+xml application/manifest+json
+</IfModule>
+
+# --- Browser caching ----------------------------------------------------------
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresDefault                        "access plus 1 month"
+
+  # HTML must stay fresh so edits go live immediately
+  ExpiresByType text/html               "access plus 0 seconds"
+  ExpiresByType application/xml         "access plus 0 seconds"
+  ExpiresByType text/plain              "access plus 0 seconds"
+
+  ExpiresByType text/css                "access plus 1 year"
+  ExpiresByType application/javascript  "access plus 1 year"
+  ExpiresByType image/png               "access plus 1 year"
+  ExpiresByType image/jpeg              "access plus 1 year"
+  ExpiresByType image/svg+xml           "access plus 1 year"
+  ExpiresByType image/x-icon            "access plus 1 year"
+  ExpiresByType font/woff2              "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+  # Revalidate HTML on every request
+  <FilesMatch "\.(html|xml|txt)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+
+  # --- Security headers -------------------------------------------------------
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), interest-cohort=()"
+  # HSTS — enable only once HTTPS is confirmed working on every page
+  # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+  Header unset X-Powered-By
+</IfModule>
+
+# --- Correct MIME types -------------------------------------------------------
+<IfModule mod_mime.c>
+  AddType application/manifest+json  .webmanifest
+  AddType image/x-icon               .ico
+  AddType font/woff2                 .woff2
+</IfModule>
+
+# --- Block dotfiles and junk --------------------------------------------------
+<FilesMatch "^\.(?!well-known)|^(\.DS_Store|Thumbs\.db)$">
+  Require all denied
+</FilesMatch>
+
+# --- Block repo files that aren't part of the public site ----------------------
+# Deploying from Git copies the whole repository into the web root, so anything
+# committed would otherwise be downloadable. Keep the docs and archives private.
+<FilesMatch "\.(md|zip|tar|gz|log|bak|sql|json5|yml|yaml)$">
+  Require all denied
+</FilesMatch>
+
+# ...but site.webmanifest and the SEO files must stay reachable
+<Files "site.webmanifest">
+  Require all granted
+</Files>
+
+# Don't expose the directory listing of folders without an index file
+Options -Indexes
