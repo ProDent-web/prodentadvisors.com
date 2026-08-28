@@ -1,7 +1,10 @@
 # Deploying prodentadvisors.com to Hostinger
 
-Everything in this folder is a plain static site — no build step, no Node, no PHP.
-You upload the files and it works.
+Everything here is a plain static site — no build step, no Node, no PHP.
+
+Deployment runs through GitHub: the repo at
+**https://github.com/ProDent-web/prodentadvisors.com** is the source of truth, and
+Hostinger pulls from it. You push, the site updates.
 
 ---
 
@@ -20,42 +23,60 @@ The included `.htaccess` redirects `www` → non-www automatically.
 
 ---
 
-## 2. Upload the site
+## 2. Connect Hostinger to GitHub
 
-**hPanel → Files → File Manager**, open `public_html`, and delete Hostinger's
-default placeholder (`default.php` or their sample `index.html`).
+Your site lives at **https://github.com/ProDent-web/prodentadvisors.com**
+(public, branch `main`). Hostinger pulls straight from it — no manual uploading.
 
-Then upload **the contents of this folder** (not the folder itself) into `public_html`:
+### 2a. Empty `public_html` first
 
-```
-public_html/
-├── .htaccess              ← important, see note below
-├── index.html
-├── about.html
-├── contact.html
-├── results.html
-├── services.html
-├── services-startups.html
-├── services-consulting.html
-├── services-marketing.html
-├── services-billing.html
-├── 404.html
-├── robots.txt
-├── sitemap.xml
-├── site.webmanifest
-└── assets/
-    ├── css/styles.css
-    ├── js/main.js
-    └── img/…
-```
+**hPanel → Files → File Manager → `public_html`.** Hostinger refuses to attach a
+Git repo to a folder that already has files in it, so delete everything inside —
+including their default `default.php` / sample `index.html`. Delete the *contents*,
+not the `public_html` folder itself.
 
-Easiest method: upload `prodent-site.zip` (in this folder) into `public_html`,
-right-click it → **Extract**, then delete the zip.
+### 2b. Attach the repository
 
-> **⚠️ `.htaccess` is a hidden file.** In File Manager, click the **gear / Settings**
-> icon and enable **"Show hidden files (dotfiles)"** — otherwise it won't appear and
-> won't get uploaded. Without it you lose the HTTPS redirect, the www redirect,
-> the custom 404 page, and caching.
+**hPanel → Websites → Dashboard** (for prodentadvisors.com) **→ Advanced → GIT**
+
+Fill in the "Create a new repository" form:
+
+| Field | Value |
+|---|---|
+| **Repository address** | `https://github.com/ProDent-web/prodentadvisors.com.git` |
+| **Branch** | `main` |
+| **Directory** | *leave blank* |
+
+Leaving **Directory** blank installs into `public_html` itself. If you type
+something there, Hostinger creates `public_html/that-name/` and your site ends up
+at `prodentadvisors.com/that-name/` — which is not what you want.
+
+Click **Create**. Because the repo is public, no SSH key or password is needed.
+
+### 2c. Deploy
+
+The repository now appears in a list on that same page with a **Deploy** button.
+Click it. Hostinger pulls `main` into `public_html` and your site is live.
+
+### 2d. Turn on auto-deploy (optional but worth the two minutes)
+
+Right now, Hostinger only updates when you click **Deploy**. To make every push go
+live automatically:
+
+1. On the Hostinger GIT page, next to your repository, click **Auto Deployment**
+   (some plans label it with a webhook / link icon). Copy the **webhook URL** it
+   shows you.
+2. Go to **https://github.com/ProDent-web/prodentadvisors.com/settings/hooks**
+   → **Add webhook**.
+3. Set:
+   - **Payload URL** — paste the Hostinger webhook URL
+   - **Content type** — `application/json`
+   - **Which events** — *Just the push event*
+   - **Active** — checked
+4. **Add webhook.**
+
+GitHub sends a test ping immediately; a green checkmark next to the webhook means
+Hostinger accepted it. From then on, `git push` = live site in a few seconds.
 
 ---
 
@@ -92,7 +113,16 @@ your inbox without needing any server code.
    var WEB3FORMS_ACCESS_KEY = 'a1b2c3d4-1234-5678-9abc-def012345678';
    ```
 
-5. Re-upload `assets/js/main.js` to `public_html/assets/js/`.
+5. Publish it:
+
+   ```bash
+   git add assets/js/main.js
+   git commit -m "Add Web3Forms access key"
+   git push
+   ```
+
+   With auto-deploy on (step 2d) it's live in seconds. Without it, click
+   **Deploy** on the Hostinger GIT page.
 
 That's it. Every submission now arrives at **info@prodentadvisors.com** with:
 
@@ -148,8 +178,41 @@ practice-consulting site will see.
 
 ## Making changes later
 
-Edit the file on your computer, then re-upload just that file through File Manager,
-overwriting the old one. HTML pages are set to `no-cache`, so edits appear
-immediately. CSS, JS and images are cached for a year by browsers — if you change
-`styles.css` or `main.js` and don't see the update, hard-refresh
-(**Cmd+Shift+R** / **Ctrl+Shift+R**), or rename the file and update the reference.
+Edit files on your computer, then:
+
+```bash
+git add -A
+git commit -m "Describe what you changed"
+git push
+```
+
+That's the whole workflow. With auto-deploy on, the site updates within seconds.
+Without it, click **Deploy** in hPanel afterwards.
+
+Two things worth knowing:
+
+- **Every change is versioned.** If an edit breaks something, `git revert` or
+  GitHub's history gets you back — which is the real reason to deploy this way
+  rather than dragging files into File Manager.
+- **Don't edit files in Hostinger's File Manager.** Hostinger's deploy overwrites
+  the folder from GitHub, so any change made on the server gets wiped on the next
+  push. GitHub is the source of truth now.
+
+**Caching note:** HTML is served `no-cache`, so page edits appear immediately.
+CSS, JS and images are cached by browsers for a year — after changing
+`styles.css` or `main.js`, hard-refresh (**Cmd+Shift+R** / **Ctrl+Shift+R**) to
+see it. Visitors get the new file because the deploy changes its timestamp, but
+if you ever want to be certain, rename the file and update the reference.
+
+---
+
+## Appendix: deploying without Git
+
+If you ever need to bypass GitHub — Hostinger's Git page is down, or you want a
+one-off fix — you can still upload by hand. Run `zip -r site.zip . -x ".git/*"`
+in this folder, upload the zip into `public_html` through File Manager,
+right-click → **Extract**, then delete the zip.
+
+Remember to enable **"Show hidden files (dotfiles)"** in File Manager's settings
+first, or `.htaccess` won't be included and you'll lose the HTTPS redirect, the
+www redirect, the custom 404 page, and caching.
