@@ -101,21 +101,19 @@
   var form = document.getElementById('contact-form');
   if (form) {
     /* ====================================================================
-       ACTIVATE EMAIL DELIVERY  (one line to change — nothing else)
+       The form posts to send.php on this same server, which emails
+       info@prodentadvisors.com. No third-party account, no API key,
+       nothing to configure.
 
-       1. Go to https://web3forms.com and enter  info@prodentadvisors.com
-       2. They email you an Access Key. Paste it between the quotes below.
-       3. Upload this file. Every submission now lands in that inbox.
-
-       Until a real key is pasted, the form REFUSES to submit and tells the
-       visitor to email or call instead — it will never show a success
-       message for a message that was not actually delivered.
+       The <form> element carries action="send.php" method="post", so if
+       JavaScript is unavailable the browser submits it the plain way and
+       send.php redirects to the thank-you page. The code below simply
+       upgrades that to an inline experience.
        ==================================================================== */
-    var WEB3FORMS_ACCESS_KEY = 'YOUR_WEB3FORMS_ACCESS_KEY';
-
+    var ENDPOINT = form.getAttribute('action') || 'send.php';
+    var SUCCESS_PAGE = 'thank-you.html';
     var NOTIFY_EMAIL = 'info@prodentadvisors.com';
     var PHONE_DISPLAY = '(571) 464-2655';
-    var SUCCESS_PAGE = 'thank-you.html';
 
     var status = document.getElementById('form-status');
     var submitBtn = form.querySelector('[type="submit"]');
@@ -130,6 +128,14 @@
       status.textContent = msg;
       status.className = 'form-status show ' + (ok ? 'ok' : 'err');
     };
+    var fallbackMsg = function (lead) {
+      return lead + ' Please email ' + NOTIFY_EMAIL + ' or call ' + PHONE_DISPLAY + '.';
+    };
+
+    // If the no-JS path bounced back with an error, say so on arrival.
+    if (window.location.search.indexOf('sent=error') !== -1) {
+      showStatus(fallbackMsg('Your message could not be sent.'), false);
+    }
 
     var validate = function () {
       var valid = true;
@@ -154,51 +160,37 @@
       if (status) status.className = 'form-status';
       if (!validate()) { showStatus('Please complete the highlighted fields.', false); return; }
 
-      // No access key means nothing can be delivered. Say so plainly rather than
-      // showing a success message for an email that was never sent.
-      if (!WEB3FORMS_ACCESS_KEY || WEB3FORMS_ACCESS_KEY === 'YOUR_WEB3FORMS_ACCESS_KEY') {
-        showStatus('This form isn\u2019t connected yet. Please email ' + NOTIFY_EMAIL +
-                   ' or call ' + PHONE_DISPLAY + ' and we\u2019ll get right back to you.', false);
-        if (window.console) {
-          console.error('[ProDent] Contact form is not configured: WEB3FORMS_ACCESS_KEY ' +
-                        'is still the placeholder in assets/js/main.js. No email was sent.');
-        }
-        return;
-      }
-
       if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending…'; }
 
-      var nameVal = (form.querySelector('[name="name"]') || {}).value || '';
-      var emailVal = (form.querySelector('[name="email"]') || {}).value || '';
+      var restore = function () {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = submitLabel; }
+      };
 
-      var data = new FormData(form);
-      data.append('access_key', WEB3FORMS_ACCESS_KEY);
-      data.append('subject', 'New website inquiry — ' + (nameVal.trim() || 'ProDent Advisors'));
-      data.append('from_name', 'ProDent Advisors Website');
-      data.append('replyto', emailVal.trim());   // hitting Reply goes straight to the prospect
-
-      fetch('https://api.web3forms.com/submit', {
+      fetch(ENDPOINT, {
         method: 'POST',
-        headers: { Accept: 'application/json' },
-        body: data
+        headers: { Accept: 'application/json', 'X-Requested-With': 'fetch' },
+        body: new FormData(form)
       })
-        .then(function (r) { return r.json(); })
+        .then(function (r) {
+          // A misconfigured server can return HTML instead of JSON; treat
+          // anything unparseable as a failure rather than a false success.
+          return r.json().catch(function () { return { success: false }; });
+        })
         .then(function (res) {
-          if (res.success) {
-            // Reset first: if the visitor hits Back, they land on an empty form
-            // rather than a filled one they might submit a second time.
+          if (res && res.success) {
+            // Reset first so the Back button doesn't offer a filled form to
+            // submit a second time.
             form.reset();
             showStatus('Thanks! Redirecting…', true);
             window.location.href = SUCCESS_PAGE;
-          } else {
-            showStatus('Something went wrong. Please email ' + NOTIFY_EMAIL + ' or call ' + PHONE_DISPLAY + '.', false);
+            return;
           }
+          restore();
+          showStatus(res && res.message ? res.message : fallbackMsg('Something went wrong.'), false);
         })
         .catch(function () {
-          showStatus('Network error. Please email ' + NOTIFY_EMAIL + ' or call ' + PHONE_DISPLAY + '.', false);
-        })
-        .finally(function () {
-          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = submitLabel; }
+          restore();
+          showStatus(fallbackMsg('Network error.'), false);
         });
     });
   }

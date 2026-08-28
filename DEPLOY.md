@@ -91,76 +91,74 @@ Once every page loads over HTTPS cleanly, you can optionally uncomment the
 
 ---
 
-## 4. Make the contact form email you  ← the part you asked about
+## 4. The contact form — nothing to set up
 
-The form on `contact.html` is wired to **Web3Forms**, which delivers submissions to
-your inbox without needing any server code.
+**There is no step here.** Submissions go to **info@prodentadvisors.com** the
+moment the site is deployed. No account, no API key, no third-party service.
 
-1. Go to **https://web3forms.com**
-2. Enter **`info@prodentadvisors.com`** in the "Enter your email" box and submit.
-3. Web3Forms emails that address an **Access Key** (a UUID like
-   `a1b2c3d4-1234-5678-9abc-def012345678`). Open the email and copy it.
-4. Open **`assets/js/main.js`**, find this line near the top of the contact-form
-   section (line 113):
+`send.php` sits in the web root and uses PHP's built-in `mail()`, which Hostinger
+provides on every plan. The form posts to it, it emails you, done.
 
-   ```js
-   var WEB3FORMS_ACCESS_KEY = 'YOUR_WEB3FORMS_ACCESS_KEY';
-   ```
+**What arrives in your inbox**
 
-   Replace the placeholder with your key:
+- **Subject:** `New website enquiry — <the person's name>`
+- **From:** `ProDent Advisors Website <noreply@prodentadvisors.com>`
+- **Reply-To:** the prospect's own address — hit **Reply** and you're writing
+  straight back to them, no copy-pasting
+- **Body:** name, email, phone, practice, what they need help with, their best
+  time to be reached, and their message, plus a timestamp
 
-   ```js
-   var WEB3FORMS_ACCESS_KEY = 'a1b2c3d4-1234-5678-9abc-def012345678';
-   ```
+Then they land on `thank-you.html`.
 
-5. Publish it:
+**Why it won't go to spam:** the From address is on prodentadvisors.com, the same
+domain Hostinger hosts, so the mail passes SPF/DKIM as legitimate mail from your
+own site rather than a spoof. This is exactly why `NOTIFY_FROM` in `send.php`
+must stay on your domain — pointing it at a Gmail address would break that and
+send everything to junk.
 
-   ```bash
-   git add assets/js/main.js
-   git commit -m "Add Web3Forms access key"
-   git push
-   ```
+**Changing the recipient** — edit one line at the top of `send.php`:
 
-   With auto-deploy on (step 2d) it's live in seconds. Without it, click
-   **Deploy** on the Hostinger GIT page.
-
-That's it. Every submission now arrives at **info@prodentadvisors.com** with:
-
-- **Subject:** `New website inquiry — <the person's name>`
-- **From name:** `ProDent Advisors Website`
-- **Reply-To:** the prospect's own email — so hitting **Reply** in your inbox
-  writes straight back to them, no copy-pasting addresses.
-- **Body:** name, email, phone, practice name, what they need help with,
-  their best time to be reached, and their message.
-
-**Until you paste the key**, the form refuses to submit. It shows a red message
-telling the visitor to email or call instead, and logs an explanation to the
-browser console. It will never show a success message for an email that wasn't
-actually sent.
-
-**On success**, the visitor is redirected to `thank-you.html` — a confirmation
-page with what-happens-next, your direct phone and email, and links onward to
-Results and Services. That page is set to `noindex` and deliberately kept out of
-`sitemap.xml`, since a confirmation page shouldn't appear in search results.
-It's also a clean conversion goal if you ever set up Google Analytics or Ads:
-count arrivals at `/thank-you.html`.
-
-**Test it after uploading:** submit the live form yourself, then check
-`info@prodentadvisors.com` — including the spam folder the first time. If it landed
-in spam, mark it "Not spam" once and future ones will inbox.
-
-<details>
-<summary>Optional: send notifications to more than one address</summary>
-
-In `assets/js/main.js`, just below the `data.append('replyto', …)` line, add:
-
-```js
-data.append('cc', 'kathim@prodentadvisors.com');
+```php
+const NOTIFY_TO = 'info@prodentadvisors.com';
 ```
 
-Web3Forms' free tier allows 250 submissions/month, which is well beyond what a
-practice-consulting site will see.
-</details>
+then `git add -A && git commit -m "Change form recipient" && git push`.
+
+### Verify it once, after deploying
+
+Submit the live form yourself and check `info@prodentadvisors.com` — **look in
+spam the first time**, and if it's there mark "Not spam" so future ones inbox.
+
+If nothing arrives at all, it's almost always one of these:
+
+1. **The mailbox doesn't exist yet.** In hPanel → **Emails**, confirm
+   `info@prodentadvisors.com` is a real mailbox on this account.
+2. **PHP is off or misversioned.** hPanel → **Advanced → PHP Configuration**;
+   `send.php` needs PHP 7.1 or newer (Hostinger defaults well above that).
+3. **`mail()` is disabled on the plan.** Rare, but check hPanel → **Emails →
+   Email Accounts**. If it is, tell me and I'll switch `send.php` to
+   authenticated SMTP against your Hostinger mailbox instead — about ten
+   minutes of work and one password.
+
+Hostinger logs every message it sends. hPanel → **Emails → Deliverability** shows
+whether the mail left the server, which separates "PHP never sent it" from
+"it sent and your mail client filed it somewhere".
+
+### Built-in spam protection
+
+- A hidden honeypot field. Bots fill it, humans never see it; those submissions
+  are silently dropped and the bot is told "thanks" so it doesn't retry.
+- A 20-second per-IP throttle, so nobody can hammer your inbox.
+- Every field is stripped of newlines before it touches a mail header, which
+  blocks header-injection — the standard way contact forms get hijacked into
+  sending spam on your behalf.
+
+### It works without JavaScript
+
+The `<form>` carries `action="send.php" method="post"`, so if a visitor has
+JavaScript disabled the browser submits it the ordinary way and `send.php`
+redirects them to the thank-you page. The JavaScript only upgrades that to an
+inline experience without a page reload.
 
 ---
 
