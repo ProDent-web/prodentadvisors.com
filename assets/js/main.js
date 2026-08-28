@@ -107,13 +107,15 @@
        2. They email you an Access Key. Paste it between the quotes below.
        3. Upload this file. Every submission now lands in that inbox.
 
-       Until a real key is pasted, the form runs in DEMO mode: the success
-       message shows so you can test the page, but no email is sent.
+       Until a real key is pasted, the form REFUSES to submit and tells the
+       visitor to email or call instead — it will never show a success
+       message for a message that was not actually delivered.
        ==================================================================== */
     var WEB3FORMS_ACCESS_KEY = 'YOUR_WEB3FORMS_ACCESS_KEY';
 
     var NOTIFY_EMAIL = 'info@prodentadvisors.com';
     var PHONE_DISPLAY = '(571) 464-2655';
+    var SUCCESS_PAGE = 'thank-you.html';
 
     var status = document.getElementById('form-status');
     var submitBtn = form.querySelector('[type="submit"]');
@@ -152,18 +154,19 @@
       if (status) status.className = 'form-status';
       if (!validate()) { showStatus('Please complete the highlighted fields.', false); return; }
 
-      var demo = !WEB3FORMS_ACCESS_KEY || WEB3FORMS_ACCESS_KEY === 'YOUR_WEB3FORMS_ACCESS_KEY';
-      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending…'; }
-
-      if (demo) {
-        // No access key pasted yet — simulate success so the UX is testable.
-        window.setTimeout(function () {
-          showStatus("Thanks! Your message has been received. We'll be in touch within one business day. (Demo mode — paste your Web3Forms key in assets/js/main.js to deliver real emails.)", true);
-          form.reset();
-          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = submitLabel; }
-        }, 700);
+      // No access key means nothing can be delivered. Say so plainly rather than
+      // showing a success message for an email that was never sent.
+      if (!WEB3FORMS_ACCESS_KEY || WEB3FORMS_ACCESS_KEY === 'YOUR_WEB3FORMS_ACCESS_KEY') {
+        showStatus('This form isn\u2019t connected yet. Please email ' + NOTIFY_EMAIL +
+                   ' or call ' + PHONE_DISPLAY + ' and we\u2019ll get right back to you.', false);
+        if (window.console) {
+          console.error('[ProDent] Contact form is not configured: WEB3FORMS_ACCESS_KEY ' +
+                        'is still the placeholder in assets/js/main.js. No email was sent.');
+        }
         return;
       }
+
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending…'; }
 
       var nameVal = (form.querySelector('[name="name"]') || {}).value || '';
       var emailVal = (form.querySelector('[name="email"]') || {}).value || '';
@@ -182,8 +185,11 @@
         .then(function (r) { return r.json(); })
         .then(function (res) {
           if (res.success) {
-            showStatus("Thanks! Your message has been received. We'll be in touch within one business day.", true);
+            // Reset first: if the visitor hits Back, they land on an empty form
+            // rather than a filled one they might submit a second time.
             form.reset();
+            showStatus('Thanks! Redirecting…', true);
+            window.location.href = SUCCESS_PAGE;
           } else {
             showStatus('Something went wrong. Please email ' + NOTIFY_EMAIL + ' or call ' + PHONE_DISPLAY + '.', false);
           }

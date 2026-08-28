@@ -133,9 +133,17 @@ That's it. Every submission now arrives at **info@prodentadvisors.com** with:
 - **Body:** name, email, phone, practice name, what they need help with,
   their best time to be reached, and their message.
 
-**Until you paste the key**, the form runs in *demo mode*: it validates, shows the
-success message and clears — but sends nothing. The success message says
-"(Demo mode…)" so you can tell at a glance.
+**Until you paste the key**, the form refuses to submit. It shows a red message
+telling the visitor to email or call instead, and logs an explanation to the
+browser console. It will never show a success message for an email that wasn't
+actually sent.
+
+**On success**, the visitor is redirected to `thank-you.html` — a confirmation
+page with what-happens-next, your direct phone and email, and links onward to
+Results and Services. That page is set to `noindex` and deliberately kept out of
+`sitemap.xml`, since a confirmation page shouldn't appear in search results.
+It's also a clean conversion goal if you ever set up Google Analytics or Ads:
+count arrivals at `/thank-you.html`.
 
 **Test it after uploading:** submit the live form yourself, then check
 `info@prodentadvisors.com` — including the spam folder the first time. If it landed
