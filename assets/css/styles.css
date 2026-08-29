@@ -152,7 +152,11 @@ strong { color: var(--ink); font-weight: 700; }
 .cols-2 { grid-template-columns: repeat(2, 1fr); }
 .cols-3 { grid-template-columns: repeat(3, 1fr); }
 .cols-4 { grid-template-columns: repeat(4, 1fr); }
-@media (max-width: 920px) { .cols-3, .cols-4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 920px) {
+  .cols-3, .cols-4 { grid-template-columns: repeat(2, 1fr); }
+  /* an odd card count would orphan the last one in the 2-col range */
+  .cols-3 > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
 @media (max-width: 620px) { .cols-2, .cols-3, .cols-4 { grid-template-columns: 1fr; } }
 
 .stack > * + * { margin-top: 1rem; }
